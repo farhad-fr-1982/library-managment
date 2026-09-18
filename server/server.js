@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import { connectDB } from './config/db.js';
 import authRouter from './routes/authRoutes.js';
+import studentRouter from './routes/studentRoutes.js';
 
 const PORT = 5000;
 const app = express();
@@ -10,6 +11,10 @@ const app = express();
 // ============ Middlewares ============
 app.use(cors());             
 app.use(express.json());   
+
+// ============ Routes ============
+app.use("/api/auth", authRouter);
+app.use("/api/students", studentRouter);
 
 // ============ DB Connected ============
 const startServer = async () => {
