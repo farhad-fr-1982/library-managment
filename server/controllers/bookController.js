@@ -102,3 +102,185 @@ export async function issueManualBooks(req, res) {
         });
     }
 }
+
+//  دریافت تمام امانت‌های دستی (مدیر)
+export async function getIssues(req, res) {
+    try {
+        //*createdAt: -1 (جدیدترین اول)
+        const issues = await Issue.find({}).sort({ createdAt: -1 });
+        res.status(200).json({
+            success: true,
+            issues
+        });
+    }
+
+    catch (error) {
+        console.error("خطا در دریافت امانت‌های دستی:", error);
+        res.status(500).json({
+            message: "خطا در دریافت امانت‌های دستی",
+            error: error.message
+        });
+    }
+}
+
+// دریافت امانت‌های دستی برای دانشجوی لاگین‌شده
+export async function getStudentIssues(req, res) {
+    try {
+        const issues = await Issue.find({
+            userEmail: req.user.email.toLowerCase()
+        }).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, issues });
+    }
+
+    catch (error) {
+        console.error("خطا در دریافت امانت‌های دانشجو:", error);
+        res.status(500).json({
+            message: "خطا در دریافت امانت‌های دانشجو",
+            error: error.message
+        });
+    }
+}
+
+// بازگشت کتاب امانت داده شده
+export async function returnBook(req, res) {
+    try {
+        const issue = await Issue.findById(req.params.id);
+        if (!issue) return res.status(404).json({ message: "رکورد امانت پیدا نشد" });
+
+        if (issue.returnedOn) return res.status(400).json({
+            message: "کتاب قبلاً بازگردانده شده است"
+        });
+        issue.returnedOn = getLocalIsoDate();
+        await issue.save();
+        res.status(200).json({
+            success: true,
+            message: "کتاب با موفقیت بازگردانده شد!",
+            issue
+        });
+    }
+
+    catch (error) {
+        console.error("خطا در بازگشت کتاب:", error);
+        res.status(500).json({
+            message: "خطا در بازگشت کتاب",
+            error: error.message
+        });
+    }
+}
+
+//  اعمال جریمه دستی
+export async function applyFine(req, res) {
+    try {
+        const fineAmount = Number(req.body.amount);
+        if (Number.isNaN(fineAmount)) return res.status(400).json({
+            message: "مبلغ جریمه نامعتبر است"
+        });
+
+        const issue = await Issue.findById(req.params.id);
+        if (!issue) return res.status(404).json({ message: "رکورد امانت پیدا نشد" });
+
+        //*manualFine -->بزار manualFine مبلغی که مدیر وارد کرده رو توی فیلد 
+        issue.manualFine = fineAmount;
+        //*کن false  رو fineCleared  اگه جریمه بزرگتر از صفر بود،
+        if (fineAmount > 0) issue.fineCleared = false;
+        await issue.save();
+
+        res.status(200).json({
+            success: true,
+            message: "جریمه دستی با موفقیت اعمال شد!",
+            issue
+        });
+    }
+
+    catch (error) {
+        console.error("خطا در اعمال جریمه دستی:", error);
+        res.status(500).json({
+            message: "خطا در اعمال جریمه دستی",
+            error: error.message
+        });
+    }
+}
+
+// پاک کردن جریمه دستی
+export async function clearFine(req, res) {
+    try {
+        const issue = await Issue.findById(req.params.id);
+        if (!issue) return res.status(404).json({ message: "رکورد امانت پیدا نشد" });
+
+        Object.assign(issue, {
+            manualFine: 0,
+            fineCleared: true,
+            clearedFineAmount: calculateFine(issue, issue.fineRate, issue.fineInterval)
+        });
+        await issue.save();
+
+        res.status(200).json({
+            success: true,
+            message: "جریمه با موفقیت پاک شد!",
+            issue
+        });
+    }
+
+    catch (error) {
+        console.error("خطا در پاک کردن جریمه دستی:", error);
+        res.status(500).json({
+            message: "خطا در اعمال جریمه دستی",
+            error: error.message
+        });
+    }
+}
+
+// دریافت تنظیمات فعال جریمه
+export async function getFineSettings(req, res) {
+    try {
+        //*برو تنظیمات جریمه رو از دیتابیس بگیر. اگه پیدا نشد، یکی با مقادیر پیش‌فرض بساز
+        //*FineSetting.findOne({})--> برو اولین تنظیمات جریمه رو از دیتابیس پیدا کن
+        //*FineSetting.create({...}) --> یه تنظیمات جدید بساز
+        //*{ amount: 10, interval: "day" } --> با مقادیر پیش‌فرض: مبلغ ۱۰، روزانه
+        const settings = (await FineSetting.findOne({})) ||
+            (await FineSetting.create({ amount: 10, interval: "day" }));
+        res.status(200).json({ success: true, settings });
+    }
+
+    catch (error) {
+        console.error("خطا در دریافت تنظیمات جریمه:", error);
+        res.status(500).json({
+            message: "خطا در دریافت تنظیمات جریمه",
+            error: error.message
+        });
+    }
+}
+
+// بروزرسانی تنظیمات جریمه
+export async function updateFineSettings(req, res) {
+    try {
+        const { amount, interval } = req.body;
+        let settings = await FineSetting.findOne({});
+
+        if (settings) {
+            //*اکه مبلغ جدید فرستاده شده، مقدار قدیمی رو با اون عوض کن
+            if (amount !== undefined) settings.amount = Number(amount);
+            //*گه بازه جدید فرستاده شده، مقدار قدیمی رو با اون عوض کن
+            if (interval !== undefined) settings.interval = interval;
+            await settings.save();
+        } else {
+            settings = await FineSetting.create({
+                amount: Number(amount) || 10,
+                interval: interval || "day"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "تنظیمات جریمه با موفقیت بروزرسانی شد!",
+            settings
+        });
+
+    } catch (error) {
+        console.error("خطا در بروزرسانی تنظیمات جریمه:", error);
+        res.status(500).json({
+            message: "خطا در بروزرسانی تنظیمات جریمه", 
+            error: error.message
+        });
+    }
+}
