@@ -1,24 +1,33 @@
-import express from 'express'
-import cors from 'cors'
-import 'dotenv/config'
-import { connectDB } from './config/db.js'
+import express from 'express';
+import cors from 'cors';
+import 'dotenv/config';
+import { connectDB } from './config/db.js';
+import authRouter from './routes/authRoutes.js';
 
-const PORT = 5000
+const PORT = 5000;
+const app = express();
 
-const app =express()
+// ============ Middlewares ============
+app.use(cors());             
+app.use(express.json());   
 
-//*Middlawers
-app.use(cors)
-app.use(express.json())
+// ============ DB Connected ============
+const startServer = async () => {
+    try {
+        await connectDB();
+        console.log('✅ متصل به MongoDB');
 
-//*DB connected
-connectDB()
+        // ============ Routes ============
+        app.use('/api/auth', authRouter);
 
-//Routes
-app.get('/',(req,res)=>{
-    res.send('Web App')
-})
+        // ============ Start Server ============
+        app.listen(PORT, () => {
+            console.log(`✅ Server Running on Port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('❌ خطا در اتصال به دیتابیس:', error);
+        process.exit(1);
+    }
+};
 
-app.listen(PORT,()=>{
-    console.log(`Server Running on Port ${PORT}`)
-})
+startServer();
