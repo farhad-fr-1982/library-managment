@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { UserRound, ShieldCheck, Mail, LockKeyhole, EyeOff, Eye, ArrowRight } from "lucide-react";
+import { UserRound, ShieldCheck, Mail, LockKeyhole, EyeOff, Eye, ArrowRight, ArrowLeft } from "lucide-react";
 import { loginStyles as s } from "../assets/dummyStyles";
 import { useAuth } from "../shared/AuthContext";
 
@@ -195,7 +195,7 @@ const Login = () => {
                                 {loading ? "در حال ورود..." : (
                                     <>
                                         ورود به سیستم
-                                        <ArrowRight size={16} />
+                                        <ArrowLeft size={16} />
                                     </>
                                 )}
                             </button>

@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import FineSetting from "../models/FineSetting.js";
-import jalaali from "jalaali-js";
+import { toJalaali } from "jalaali-js";;
 
 // ✅ تابع کمکی برای دو رقمی کردن اعداد
 const pad = (n) => String(n).padStart(2, "0");
