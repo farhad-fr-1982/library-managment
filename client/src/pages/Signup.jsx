@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../shared/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { CheckCircle2, UserRound, Mail, Phone, LockKeyhole, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, UserRound, Mail, Phone, LockKeyhole, Eye, EyeOff, KeyRound, ArrowLeft, Sparkles, BadgeCheck } from 'lucide-react';
 import { signupStyles as s } from "../assets/dummyStyles";
+import { studentYears, studentSemesters } from "../data/libraryData";
 
 const stepList = [
     { id: 1, title: "حساب کاربری" },
@@ -16,10 +17,9 @@ const signupHighlights = [
     "مرحله ۳ دانشکده، رشته، ترم، سال و شماره دانشجویی را ذخیره می‌کند.",
 ];
 
-const demoOtp = "2468";
-
 const Signup = () => {
-    const { registerStudent, verifyOtpCode, completeProfileData, logout } = useAuth();
+    // ✅ اصلاح شد: completeProfile (نه completeProfileData)
+    const { registerStudent, verifyOtpCode, completeProfile, logout } = useAuth();
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [error, setError] = useState("");
@@ -35,8 +35,8 @@ const Signup = () => {
         role: "user",
         department: "",
         stream: "",
-        semester: "Semester 1",
-        academicYear: "1st Year",
+        semester: "ترم ۱",
+        academicYear: "سال اول",
         rollNumber: "",
     });
 
@@ -65,11 +65,11 @@ const Signup = () => {
             !form.phone.trim() ||
             !form.password.trim()
         ) {
-            setError("Please fill name, email, mobile number, and password first.");
+            setError("لطفاً ابتدا نام، ایمیل، شماره موبایل و رمز عبور را وارد کنید.");
             return false;
         }
         if (form.phone.trim().replace(/\D/g, "").length !== 10) {
-            setError("Mobile number must be exactly 10 digits.");
+            setError("شماره موبایل باید دقیقاً ۱۰ رقم باشد.");
             return false;
         }
         return true;
@@ -83,9 +83,7 @@ const Signup = () => {
             !form.academicYear.trim() ||
             !form.rollNumber.trim()
         ) {
-            setError(
-                "Please complete department, stream, semester, year, and roll number."
-            );
+            setError("لطفاً دانشکده، رشته، ترم، سال و شماره دانشجویی را کامل کنید.");
             return false;
         }
         return true;
@@ -113,12 +111,12 @@ const Signup = () => {
                 setError(res.error);
                 return;
             }
-            showToast("OTP sent to your email successfully!");
+            showToast("کد تایید با موفقیت به ایمیل شما ارسال شد!");
         }
 
         if (step === 2) {
             if (!form.otp.trim()) {
-                setError("Please enter the 6-digit OTP code sent to your email.");
+                setError("لطفاً کد ۶ رقمی ارسال شده به ایمیل خود را وارد کنید.");
                 return;
             }
             setLoading(true);
@@ -132,7 +130,7 @@ const Signup = () => {
                 setError(res.error);
                 return;
             }
-            showToast("OTP verified successfully!");
+            showToast("کد تایید با موفقیت بررسی شد!");
         }
 
         setStep((current) => Math.min(3, current + 1));
@@ -143,7 +141,6 @@ const Signup = () => {
         setStep((current) => Math.max(1, current - 1));
     };
 
-    // ارسال داده و ثبت‌نام کاربر در سرور
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError("");
@@ -153,7 +150,8 @@ const Signup = () => {
         }
 
         setLoading(true);
-        const result = await completeProfileData({
+        // ✅ اصلاح شد: completeProfile (نه completeProfileData)
+        const result = await completeProfile({
             email: form.email,
             department: form.department,
             stream: form.stream,
@@ -176,7 +174,6 @@ const Signup = () => {
                 replace: true,
                 state: {
                     signupEmail: form.email,
-                    signupPassword: form.password,
                 },
             });
         }, 1000);
@@ -210,7 +207,6 @@ const Signup = () => {
                             مراحل ثبت‌نام دانشجو را کامل کنید: حساب کاربری، کد تایید و پروفایل.
                         </p>
 
-                        {/* نوار پیشرفت */}
                         <div className={s.stepGrid}>
                             {stepList.map((item) => (
                                 <div
@@ -223,13 +219,10 @@ const Signup = () => {
                             ))}
                         </div>
 
-                        {/* ============ فرم ============ */}
                         <form className={s.form} onSubmit={handleSubmit}>
-
-                            {/* ============ مرحله ۱: حساب کاربری ============ */}
+                            {/* مرحله ۱ */}
                             {step === 1 && (
                                 <>
-                                    {/* نام کامل */}
                                     <label className="block">
                                         <span className={s.fieldLabel}>
                                             <UserRound size={15} />
@@ -245,7 +238,6 @@ const Signup = () => {
                                         />
                                     </label>
 
-                                    {/* ایمیل */}
                                     <label className="block">
                                         <span className={s.fieldLabel}>
                                             <Mail size={15} />
@@ -261,7 +253,6 @@ const Signup = () => {
                                         />
                                     </label>
 
-                                    {/* شماره موبایل */}
                                     <label className="block">
                                         <span className={s.fieldLabel}>
                                             <Phone size={15} />
@@ -272,12 +263,11 @@ const Signup = () => {
                                             name="phone"
                                             value={form.phone}
                                             onChange={handleChange}
-                                            placeholder="+91 1234567890"
+                                            placeholder="0912345678"
                                             className={s.input}
                                         />
                                     </label>
 
-                                    {/* رمز عبور */}
                                     <label className="block">
                                         <span className={s.fieldLabel}>
                                             <LockKeyhole size={15} />
@@ -308,25 +298,37 @@ const Signup = () => {
                                 </>
                             )}
 
-                            {/* ============ مرحله ۲: کد تایید ============ */}
+                            {/* مرحله ۲ */}
                             {step === 2 && (
-                                <label className="block">
-                                    <span className={s.fieldLabel}>
-                                        کد تایید
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="otp"
-                                        value={form.otp}
-                                        onChange={handleChange}
-                                        placeholder="کد ۶ رقمی ارسال شده به ایمیل"
-                                        className={s.input}
-                                        maxLength={6}
-                                    />
-                                </label>
+                                <>
+                                    <div className={s.otpInfoBox}>
+                                        <p className={s.otpInfoLabel}>کد تایید ارسال شد</p>
+                                        <p className={s.otpInfoText}>
+                                            ما یک کد تایید ۶ رقمی به{" "}
+                                            <span className={s.emailHighlight}>{form.email}</span> ارسال کردیم.
+                                            لطفاً صندوق ورودی خود را بررسی کنید و کد را در زیر وارد کنید تا حساب کاربری خود را تایید کنید.
+                                        </p>
+                                    </div>
+
+                                    <label className="block">
+                                        <span className={s.fieldLabel}>
+                                            <KeyRound size={15} />
+                                            تایید کد
+                                        </span>
+                                        <input
+                                            name="otp"
+                                            type="text"
+                                            value={form.otp}
+                                            onChange={handleChange}
+                                            placeholder="کد ۶ رقمی را وارد کنید"
+                                            className={s.input}
+                                            maxLength={6}
+                                        />
+                                    </label>
+                                </>
                             )}
 
-                            {/* ============ مرحله ۳: پروفایل ============ */}
+                            {/* مرحله ۳ */}
                             {step === 3 && (
                                 <>
                                     <label className="block">
@@ -355,24 +357,30 @@ const Signup = () => {
 
                                     <label className="block">
                                         <span className={s.fieldLabel}>ترم</span>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="semester"
                                             value={form.semester}
                                             onChange={handleChange}
-                                            className={s.input}
-                                        />
+                                            className={s.select}
+                                        >
+                                            {studentSemesters.map((sem) => (
+                                                <option key={sem} value={sem}>{sem}</option>
+                                            ))}
+                                        </select>
                                     </label>
 
                                     <label className="block">
                                         <span className={s.fieldLabel}>سال تحصیلی</span>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="academicYear"
                                             value={form.academicYear}
                                             onChange={handleChange}
-                                            className={s.input}
-                                        />
+                                            className={s.select}
+                                        >
+                                            {studentYears.map((year) => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
                                     </label>
 
                                     <label className="block">
@@ -389,17 +397,15 @@ const Signup = () => {
                                 </>
                             )}
 
-                            {/* نمایش خطا */}
                             {error && <p className={s.errorMessage}>{error}</p>}
 
-                            {/* دکمه‌ها */}
                             <div className={s.buttonGroup}>
                                 {step > 1 && (
                                     <button
                                         type="button"
                                         onClick={goBack}
-                                        className={s.backButton}
                                         disabled={loading}
+                                        className={s.backButton}
                                     >
                                         قبلی
                                     </button>
@@ -409,18 +415,20 @@ const Signup = () => {
                                     <button
                                         type="button"
                                         onClick={goNext}
-                                        className={s.nextButton}
                                         disabled={loading}
+                                        className={s.nextButton}
                                     >
                                         {loading ? "در حال بررسی..." : "بعدی"}
+                                        {!loading && <ArrowLeft size={15} />}
                                     </button>
                                 ) : (
                                     <button
                                         type="submit"
-                                        className={s.submitButton}
                                         disabled={loading}
+                                        className={s.submitButton}
                                     >
                                         {loading ? "در حال ثبت‌نام..." : "ثبت‌نام"}
+                                        {!loading && <ArrowLeft size={15} />}
                                     </button>
                                 )}
                             </div>
@@ -428,15 +436,21 @@ const Signup = () => {
                     </div>
                 </section>
 
-                {/* پنل راست: اطلاعات */}
                 <section className={s.infoPanel}>
-                    <span className={s.infoBadge}>راهنمای ثبت‌نام</span>
-                    <h1 className={s.infoTitle}>در سه مرحله ثبت‌نام کنید</h1>
+                    <span className={s.infoBadge}>
+                        <Sparkles size={14} />
+                        ثبت‌نام مرحله‌به‌مرحله
+                    </span>
+
+                    <h2 className={s.infoTitle}>
+                        ایجاد حساب دانشجو، تایید کد و تکمیل پروفایل در سه مرحله
+                    </h2>
 
                     <ul className={s.infoList}>
                         {signupHighlights.map((highlight, index) => (
                             <li key={index} className={s.infoListItem}>
-                                {highlight}
+                                <BadgeCheck size={18} className={s.infoIcon} />
+                                <span>{highlight}</span>
                             </li>
                         ))}
                     </ul>
