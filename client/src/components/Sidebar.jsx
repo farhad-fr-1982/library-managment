@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { sidebarStyles as s } from '../assets/dummyStyles' 
-import { Bell, BookCopy, ChartNoAxesCombined, ChevronRight, Menu, ShieldCheck, UserRound, X } from "lucide-react";
+import { sidebarStyles as s } from '../assets/dummyStyles'
+import { 
+    Bell, 
+    BookCopy, 
+    ChartNoAxesCombined, 
+    ChevronRight, 
+    Menu, 
+    ShieldCheck, 
+    UserRound, 
+    X,
+    UserPlus,    // ➕ اضافه کنید
+    LogIn        // ➕ اضافه کنید
+} from "lucide-react";
 
-//* فعلی رو بگیر، یه حالت باز/بسته تعریف کن، و استایل مناسب رو انتخاب کن یه نقشه آیکون بساز URL
 const iconMap = {
     dashboard: ChartNoAxesCombined,
     books: BookCopy,
@@ -12,14 +22,14 @@ const iconMap = {
     users: UserRound
 };
 
-// ✅ کامپوننت Sidebar (همه کد داخل این تابع)
-export default function Sidebar({ 
-    title, 
-    subtitle, 
-    badge, 
-    navItems = [], 
-    accent = "user", 
-    logoSrc 
+export default function Sidebar({
+    title,
+    subtitle,
+    badge,
+    navItems = [],
+    accent = "user",
+    logoSrc,
+    footerItems = []  // ➕ اضافه کنید با default value
 }) {
     const location = useLocation();
     const [open, setOpen] = useState(false);
@@ -34,7 +44,6 @@ export default function Sidebar({
 
             <div className={`${s.mobileOverlay} ${open ? s.mobileOverlayOpen : s.mobileOverlayClosed}`} onClick={() => setOpen(false)} />
 
-            {/* یک سربرگ برای نوار کناری بساز که داخلش یک لوگو نمایش داده می‌شود. اگر logoSrc وجود داشته باشد، عکس لوگو نمایش داده می‌شود. وگرنه، آیکون BookCopy */}
             <aside className={`${s.sidebar} ${open ? s.sidebarOpen : s.sidebarClosed}`}>
                 <div className={s.sidebarHeader}>
                     <div className={"min-w-0 pr-3"}>
@@ -57,7 +66,6 @@ export default function Sidebar({
                     </button>
                 </div>
 
-                {/* یک نوار ناوبری بساز و روی هر آیتم منو بگرد. برای هر آیتم، آیکون مناسبش را پیدا کن و بررسی کن که آیا صفحه فعلی همان آیتم است یا نه */}
                 <nav className={s.nav}>
                     {navItems.map((item) => {
                         const Icon = iconMap[item.icon] ?? ChevronRight;
@@ -75,7 +83,6 @@ export default function Sidebar({
                                     <Icon size={18} />
                                 </span>
 
-                                {/* یک محفظه بساز که برچسب label و توضیحات description آیتم منو را نمایش دهد */}
                                 <span className="min-w-0 flex-1">
                                     <span className={s.navLabel}>{item.label}</span>
                                     <span className={`${s.navDescription} ${active ? s.navDescriptionActive : s.navDescriptionInactive}`}>
@@ -83,12 +90,56 @@ export default function Sidebar({
                                     </span>
                                 </span>
 
-                                {/* اگر آیتم فعال باشد، کلاس navChevronActive و اگر غیرفعال باشد، کلاس navChevronInactive را اعمال کن */}
-                                <ChevronRight size={16} className={active ? s.navChevronActive : s.navChevronInactive}/>
+                                <ChevronRight size={16} className={active ? s.navChevronActive : s.navChevronInactive} />
                             </Link>
                         );
                     })}
                 </nav>
+
+                {/* فوتر — دکمه‌ها و لینک‌های پایین سایدبار */}
+                {footerItems.length > 0 && (
+                    <div className={s.footer}>
+                        {footerItems.map((item) => {
+                            const Icon = item.icon === "signup" ? UserPlus : LogIn;
+
+                            if (item.action) {
+                                return (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={item.action}
+                                        className={`${s.footerButton} ${item.kind === "primary"
+                                                ? s.footerButtonPrimary
+                                                : s.footerButtonSecondary
+                                            }`}
+                                    >
+                                        <span className={s.footerIconWrapper}>
+                                            <Icon size={16} />
+                                            {item.label}
+                                        </span>
+                                        <ChevronRight size={16} />
+                                    </button>
+                                );
+                            }
+
+                            return (
+                                <Link
+                                    key={item.label}
+                                    to={item.href}
+                                    className={`${s.footerLink} ${item.kind === "primary"
+                                            ? s.footerLinkPrimary
+                                            : s.footerLinkSecondary
+                                        }`}>
+                                    <span className={s.footerIconWrapper}>
+                                        <Icon size={16} />
+                                        {item.label}
+                                    </span>
+                                    <ChevronRight size={16} />
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
             </aside>
         </>
     )

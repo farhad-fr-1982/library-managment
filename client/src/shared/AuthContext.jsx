@@ -1,13 +1,11 @@
-import { createContext } from "react";
+import { createContext, useState, useEffect, useContext } from "react"; // ➕ اضافه کنید
 
 const AuthContext = createContext(null);
 
-//*تنظیمات احراز هویت
 const SESSION_KEY = 'library-auth-session';
 const TOKEN_KEY = 'library-auth-token';
 const API_BASE_URL = 'http://localhost:5000/api/auth'
 
-//*تعریف کن که اطلاعات کاربر را از دیتابیس به فرمت موردنیاز فرانت‌اند تبدیل می‌کند mapUserToFrontend  بساز. سپس یک تابع به نام  defaultAccounts  یک آرایه خالی به نام
 const defaultAccounts = [];
 
 const mapUserToFrontend = (user) => {
@@ -29,12 +27,10 @@ const mapUserToFrontend = (user) => {
 };
 
 export const AuthProvider = ({ children }) => {
-    //*بساز state کی برای لیست حساب‌ها، یکی برای کاربر فعلی، و یکی برای آماده بودن سه متغیر 
     const [accounts, setAccounts] = useState(defaultAccounts);
     const [currentUser, setCurrentUser] = useState(null);
     const [ready, setReady] = useState(false);
 
-    //* وقتی اپلیکیشن باز می‌شه، بررسی کن که آیا کاربر قبلاً لاگین کرده یا نه. اگر کرده، اطلاعاتش رو بگیر اگر مدیره لیست همه کاربران رو هم بگیر
     const fetchRegisteredUsers = async (token) => {
         try {
             const response = await fetch(`${API_BASE_URL}/users`, {
@@ -123,7 +119,6 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, []);
 
-    //* کاربر با ایمیل و رمز عبور وارد می‌شه. اول سرور رو امتحان کن. اگه سرور جواب نداد، از حساب‌های پیش‌فرض  استفاده کن. اگه همه چی درست بود، توکن رو ذخیره کن و کاربر رو لاگین کن
     const login = async ({ email, password, role }) => {
         try {
             console.log("AuthContext: Sending login request to backend...");
@@ -217,42 +212,70 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    //* خروج و پاک کردن توکن
     const logout = () => {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(SESSION_KEY);
         setCurrentUser(null);
     };
 
-    //* اطلاعات دانشجو (نام، ایمیل، تلفن، رمز عبور) رو به سرور بفرست تا ثبت‌نام کنه. اگه موفق بود، پیام موفقیت برگردان. اگه خطا بود، پیام خطا بده
     const registerStudent = async ({ name, email, phone, password }) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, phone, password }),
-      });
+        try {
+            const response = await fetch(`${API_BASE_URL}/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ name, email, phone, password }),
+            });
 
-      const data = await response.json();
-      if (!response.ok) {
-        return { ok: false, error: data.message || "Registration failed" };
-      }
-      return { ok: true, message: data.message };
-    } catch (error) {
-      console.error("Register API error:", error);
-      return {
-        ok: false,
-        error: "Failed to connect to authentication server.",
-      };
-    }
-  };
+            const data = await response.json();
+            if (!response.ok) {
+                return { ok: false, error: data.message || "Registration failed" };
+            }
+            return { ok: true, message: data.message };
+        } catch (error) {
+            console.error("Register API error:", error);
+            return {
+                ok: false,
+                error: "Failed to connect to authentication server.",
+            };
+        }
+    };
 
+    // ➕ توابع گمشده (stub ها)
+    const signup = async (data) => ({ ok: true });
+    const verifyOtpCode = async (code) => ({ ok: true });
+    const completeProfile = async (data) => ({ ok: true });
+    const accountExists = (email) => false;
+    const updateProfile = async (data) => ({ ok: true });
 
     return (
-        <AuthContext.Provider>
+        <AuthContext.Provider
+            value={{
+                accounts,
+                currentUser,
+                login,
+                logout,
+                ready,
+                signup,
+                registerStudent,
+                verifyOtpCode,
+                completeProfile,
+                accountExists,
+                updateProfile,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )
 }
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+
+    if (!context) {
+        throw new Error("useAuth must be used inside AuthProvider");
+    }
+
+    return context;
+};
