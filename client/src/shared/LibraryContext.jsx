@@ -3,6 +3,14 @@ import { useAuth } from "./AuthContext";
 
 const LibraryContext = createContext(null);
 
+// ============================================================
+// توابع کمکی
+// ============================================================
+
+// تبدیل اعداد فارسی به انگلیسی
+const toEnglishDigits = (str) =>
+    String(str).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+
 // تابع کمکی برای تبدیل اعداد به فارسی
 const toPersianNumber = (num) => {
   if (num === null || num === undefined || num === "") return "";
@@ -374,12 +382,13 @@ const hydrateFineSettings = (storedSettings) => {
 };
 
 const getStartOfDay = (value) => {
-  const date = new Date(value);
+  const date = new Date(toEnglishDigits(value));
   date.setHours(0, 0, 0, 0);
   return date;
 };
 
 const today = () => getStartOfDay(new Date());
+
 const getLocalIsoDate = (value = new Date()) => {
   const date = new Date(value);
   const year = date.getFullYear();
@@ -388,14 +397,27 @@ const getLocalIsoDate = (value = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-// ⬅️ تاریخ شمسی با اعداد فارسی
+// ✅ تابع اصلاح‌شده: تبدیل اعداد فارسی به انگلیسی + فرمت شمسی
 const formatDate = (value) => {
   if (!value) return "";
-  return new Intl.DateTimeFormat("fa-IR", {
+
+  // تبدیل اعداد فارسی به انگلیسی
+  const cleanValue = toEnglishDigits(value);
+
+  // تبدیل به تاریخ
+  const date = new Date(cleanValue);
+
+  // بررسی اعتبار
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  // فرمت‌دهی با تقویم شمسی
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
     day: "2-digit",
     month: "long",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
 };
 
 const getDiffInDays = (targetDate) => {
@@ -439,7 +461,6 @@ const getFineAmount = (record, fineSettings) => {
   return automaticFine + (Number(record.manualFine) || 0);
 };
 
-// ⬅️ timeline با اعداد فارسی
 const getTimeline = (record) => {
   if (!record) {
     return "آماده برای امانت";
@@ -476,7 +497,6 @@ const getBookView = (book, fineSettings) => {
     issuedDate: activeLoan ? formatDate(activeLoan.issuedOn) : "-",
     timeline: getTimeline(activeLoan),
     fineAmount,
-    // ⬅️ قیمت با اعداد فارسی و تومان
     fineLabel: fineAmount ? toPersianCurrency(fineAmount) : "بدون جریمه",
     canReturn: Boolean(activeLoan),
   };
@@ -926,7 +946,7 @@ export const LibraryProvider = ({ children }) => {
   const studentSummaries = studentAccounts.map((account) => {
     const records = allRecords
       .filter((record) => record.userEmail === account.email)
-      .sort((a, b) => new Date(b.issuedOn).getTime() - new Date(a.issuedOn).getTime());
+      .sort((a, b) => new Date(toEnglishDigits(b.issuedOn)).getTime() - new Date(toEnglishDigits(a.issuedOn)).getTime());
 
     const activeRecords = records.filter((record) => !record.returnedOn);
     const overdueRecords = activeRecords.filter((record) => record.liveStatus === "دیرکرد");
@@ -951,7 +971,7 @@ export const LibraryProvider = ({ children }) => {
     ? studentSummaries.find((student) => student.email === currentUser.email) ?? (() => {
         const records = allRecords
           .filter((record) => record.userEmail === currentUser.email)
-          .sort((a, b) => new Date(b.issuedOn).getTime() - new Date(a.issuedOn).getTime());
+          .sort((a, b) => new Date(toEnglishDigits(b.issuedOn)).getTime() - new Date(toEnglishDigits(a.issuedOn)).getTime());
 
         const activeRecords = records.filter((record) => !record.returnedOn);
         const overdueRecords = activeRecords.filter((record) => record.liveStatus === "دیرکرد");
@@ -982,7 +1002,6 @@ export const LibraryProvider = ({ children }) => {
   const activeRecords = allRecords.filter((record) => !record.returnedOn);
   const overdueRecords = allRecords.filter((record) => record.liveStatus === "دیرکرد");
 
-  // ⬅️ آمار با اعداد فارسی
   const adminStats = [
     {
       label: "کل امانت‌ها",

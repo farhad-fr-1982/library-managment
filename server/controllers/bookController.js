@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import FineSetting from "../models/FineSetting.js";
-import { toJalaali } from "jalaali-js";;
+import Issue from "../models/Issue.js";
+import { toJalaali } from "jalaali-js";
 
 // ✅ تابع کمکی برای دو رقمی کردن اعداد
 const pad = (n) => String(n).padStart(2, "0");
@@ -12,13 +13,12 @@ const getLocalIsoDate = (value = new Date()) => {
     const gm = d.getMonth() + 1;
     const gd = d.getDate();
 
-    // تبدیل میلادی به شمسی
-    const { jy, jm, jd } = jalaali.toJalaali(gy, gm, gd);
+    const { jy, jm, jd } = toJalaali(gy, gm, gd);
 
     return `${jy}-${pad(jm)}-${pad(jd)}`;
 };
 
-//  شروع روز (نیمه‌شب)
+// شروع روز (نیمه‌شب)
 const getStartOfDay = (value) =>
     new Date(new Date(value).setHours(0, 0, 0, 0));
 
@@ -40,7 +40,7 @@ const calculateFine = (issue, fineRate = 10, fineInterval = "day") => {
     return getOverdueUnits(overdueDays, fineInterval) * fineRate + (Number(issue.manualFine) || 0);
 };
 
-//  امانت دستی کتاب‌ها به دانشجو
+// امانت دستی کتاب‌ها به دانشجو
 export async function issueManualBooks(req, res) {
     try {
         const { studentDetails, books } = req.body;
@@ -48,7 +48,9 @@ export async function issueManualBooks(req, res) {
             return res.status(400).json({ message: "هیچ کتابی وارد نشده است" })
         }
 
-        const student = await User.findOne({ rollNumber: studentDetails.rollNumber });
+        // ✅ اصلاح شد: جستجو با email
+        const student = await User.findOne({ email: studentDetails.userEmail });
+        
         if (!student) return res.status(404).json({
             success: false,
             message: "دانشجو پیدا نشد"
@@ -62,7 +64,6 @@ export async function issueManualBooks(req, res) {
             });
         }
 
-        //*برای هر کتاب، یه رکورد امانت تو دیتابیس می‌سازه — همه رو با هم، نه یکی یکی
         const createdIssues = await Promise.all(validBooks.map(book => Issue.create({
             source: "manual",
             bookCode: book.bookCode.trim(),
@@ -77,12 +78,12 @@ export async function issueManualBooks(req, res) {
             manualFine: 0,
             fineCleared: false,
             clearedFineAmount: 0,
-            department: studentDetails.department?.trim() || student.department || "General",
-            stream: studentDetails.stream?.trim() || student.stream || "General",
-            year: studentDetails.academicYear?.trim() || student.year || "1st Year",
-            semester: studentDetails.semester?.trim() || student.semester || "Semester 1",
-            rollNumber: studentDetails.rollNumber?.trim() || student.rollNo || "Not assigned",
-            studentId: student.rollNo || `ST-${student._id.toString().slice(-4)}`
+            department: studentDetails.department?.trim() || student.department || "عمومی",
+            stream: studentDetails.stream?.trim() || student.stream || "عمومی",
+            year: studentDetails.academicYear?.trim() || student.year || "سال اول",
+            semester: studentDetails.semester?.trim() || student.semester || "ترم ۱",
+            rollNumber: studentDetails.rollNumber?.trim() || student.rollNo || "تعیین نشده",
+            studentId: student.studentId || `ST-${student._id.toString().slice(-4)}`
         })));
 
         res.status(201).json({
@@ -103,10 +104,9 @@ export async function issueManualBooks(req, res) {
     }
 }
 
-//  دریافت تمام امانت‌های دستی (مدیر)
+// دریافت تمام امانت‌های دستی (مدیر)
 export async function getIssues(req, res) {
     try {
-        //*createdAt: -1 (جدیدترین اول)
         const issues = await Issue.find({}).sort({ createdAt: -1 });
         res.status(200).json({
             success: true,
@@ -168,7 +168,7 @@ export async function returnBook(req, res) {
     }
 }
 
-//  اعمال جریمه دستی
+// اعمال جریمه دستی
 export async function applyFine(req, res) {
     try {
         const fineAmount = Number(req.body.amount);
@@ -179,9 +179,7 @@ export async function applyFine(req, res) {
         const issue = await Issue.findById(req.params.id);
         if (!issue) return res.status(404).json({ message: "رکورد امانت پیدا نشد" });
 
-        //*manualFine -->بزار manualFine مبلغی که مدیر وارد کرده رو توی فیلد 
         issue.manualFine = fineAmount;
-        //*کن false  رو fineCleared  اگه جریمه بزرگتر از صفر بود،
         if (fineAmount > 0) issue.fineCleared = false;
         await issue.save();
 
@@ -233,10 +231,6 @@ export async function clearFine(req, res) {
 // دریافت تنظیمات فعال جریمه
 export async function getFineSettings(req, res) {
     try {
-        //*برو تنظیمات جریمه رو از دیتابیس بگیر. اگه پیدا نشد، یکی با مقادیر پیش‌فرض بساز
-        //*FineSetting.findOne({})--> برو اولین تنظیمات جریمه رو از دیتابیس پیدا کن
-        //*FineSetting.create({...}) --> یه تنظیمات جدید بساز
-        //*{ amount: 10, interval: "day" } --> با مقادیر پیش‌فرض: مبلغ ۱۰، روزانه
         const settings = (await FineSetting.findOne({})) ||
             (await FineSetting.create({ amount: 10, interval: "day" }));
         res.status(200).json({ success: true, settings });
@@ -258,9 +252,7 @@ export async function updateFineSettings(req, res) {
         let settings = await FineSetting.findOne({});
 
         if (settings) {
-            //*اکه مبلغ جدید فرستاده شده، مقدار قدیمی رو با اون عوض کن
             if (amount !== undefined) settings.amount = Number(amount);
-            //*گه بازه جدید فرستاده شده، مقدار قدیمی رو با اون عوض کن
             if (interval !== undefined) settings.interval = interval;
             await settings.save();
         } else {

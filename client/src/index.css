@@ -95,3 +95,171 @@ textarea {
   min-height: 100vh;
   overflow-x: hidden;
 }
+
+/* ============================================================
+   DatePicker شمسی - رنگ‌های پررنگ
+   ============================================================ */
+
+/* کانتینر اصلی */
+.rmdp-wrapper,
+.rmdp-calendar {
+    background: #f6f0e3 !important;
+    direction: rtl !important;
+    font-family: 'IRANSansWeb', sans-serif !important;
+}
+
+/* ============ روزهای هفته (شنبه، یکشنبه، ...) ============ */
+.rmdp-week-day,
+.rmdp-wrapper .rmdp-week-day,
+.rmdp-calendar .rmdp-week-day {
+    color: #14231d !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    opacity: 1 !important;
+}
+
+/* ============ روزهای عادی ============ */
+.rmdp-day,
+.rmdp-wrapper .rmdp-day,
+.rmdp-calendar .rmdp-day,
+.rmdp-day span,
+.rmdp-wrapper .rmdp-day span {
+    color: #14231d !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    opacity: 1 !important;
+    background: transparent !important;
+}
+
+/* hover روی روزها */
+.rmdp-day:hover,
+.rmdp-wrapper .rmdp-day:hover,
+.rmdp-calendar .rmdp-day:hover {
+    background: rgba(201, 165, 90, 0.35) !important;
+    color: #14231d !important;
+    font-weight: 800 !important;
+}
+
+.rmdp-day:hover span,
+.rmdp-wrapper .rmdp-day:hover span {
+    color: #14231d !important;
+}
+
+/* ============ روزهای ماه قبل و بعد ============ */
+.rmdp-day.rmdp-deactive,
+.rmdp-wrapper .rmdp-day.rmdp-deactive,
+.rmdp-calendar .rmdp-day.rmdp-deactive,
+.rmdp-day.rmdp-deactive span {
+    color: #6b7a72 !important;          /* ⬅️ خاکستری تیره‌تر (قبلاً ۰.۲۵ بود) */
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+/* ============ روزهای غیرفعال ============ */
+.rmdp-day.rmdp-disabled,
+.rmdp-wrapper .rmdp-day.rmdp-disabled {
+    color: #b8c0bb !important;
+    font-weight: 500 !important;
+    opacity: 1 !important;
+}
+
+/* ============ روز امروز ============ */
+.rmdp-today,
+.rmdp-wrapper .rmdp-today,
+.rmdp-today span {
+    background: rgba(201, 165, 90, 0.45) !important;
+    color: #14231d !important;
+    font-weight: 900 !important;
+    border-radius: 8px !important;
+}
+
+/* ============ روز انتخاب‌شده ============ */
+.rmdp-selected,
+.rmdp-wrapper .rmdp-selected,
+.rmdp-selected span,
+.rmdp-wrapper .rmdp-selected span {
+    background: #183127 !important;
+    color: #f0dfb4 !important;
+    font-weight: 900 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(24, 49, 39, 0.4) !important;
+}
+
+.rmdp-selected:hover,
+.rmdp-wrapper .rmdp-selected:hover {
+    background: #2b4a3a !important;
+    color: #f0dfb4 !important;
+}
+
+/* ============ سربرگ (ماه و سال) ============ */
+.rmdp-header,
+.rmdp-wrapper .rmdp-header {
+    background: #183127 !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+.rmdp-header-values,
+.rmdp-wrapper .rmdp-header-values {
+    color: #f0dfb4 !important;
+    font-weight: 800 !important;
+    font-size: 15px !important;
+}
+
+/* ============ فلش‌ها ============ */
+.rmdp-arrow {
+    border-color: #f0dfb4 !important;
+}
+
+.rmdp-arrow-container:hover {
+    background: rgba(201, 165, 90, 0.4) !important;
+}
+
+.rmdp-arrow-container:hover .rmdp-arrow {
+    border-color: #c9a55a !important;
+}
+
+/* ============ فوتر (پاک کردن و امروز) ============ */
+.rmdp-action-button,
+.rmdp-wrapper .rmdp-action-button {
+    color: #183127 !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    opacity: 1 !important;
+}
+
+.rmdp-action-button:hover {
+    background: rgba(201, 165, 90, 0.3) !important;
+    color: #14231d !important;
+}
+
+/* ============ input تقویم ============ */
+.rmdp-input {
+    background: rgba(246, 240, 227, 0.75) !important;
+    border: 1px solid rgba(20, 35, 29, 0.15) !important;
+    border-radius: 16px !important;
+    padding: 12px 16px !important;
+    color: #14231d !important;
+    font-family: 'IRANSansWeb', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    text-align: right !important;
+    direction: rtl !important;
+    outline: none !important;
+    width: 100% !important;
+    opacity: 1 !important;
+}
+
+.rmdp-input:focus {
+    border-color: #183127 !important;
+    background: white !important;
+    box-shadow: 0 0 0 3px rgba(24, 49, 39, 0.15) !important;
+}
+
+.rmdp-input::placeholder {
+    color: rgba(20, 35, 29, 0.5) !important;
+    font-weight: 500 !important;
+}

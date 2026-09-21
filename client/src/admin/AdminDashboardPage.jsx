@@ -1,8 +1,7 @@
 import React from 'react'
-import { UserRound, Activity, ShieldEllipsis, AlertTriangle } from 'lucide-react';
+import { UserRound, Activity, ShieldEllipsis, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { adminDashboardStyles as s } from "../assets/dummyStyles";
 import { useLibrary } from "../shared/LibraryContext";
-import { Link } from 'react-router-dom';
 
 const icons = [UserRound, Activity, ShieldEllipsis, AlertTriangle];
 
@@ -128,25 +127,26 @@ const AdminDashboardPage = () => {
                     </p>
                   </div>
 
+                  {/* اطلاعات کتاب */}
                   <div className={s.highestFineBookContainer}>
-                    <p className={s.highestFineLabel}>
-                      کتاب با بیشترین جریمه
-                    </p>
-                    <p className={s.highestFineTitle}>
-                      {record.title}
-                    </p>
+                    <p className={s.highestFineLabel}>کتاب با بیشترین جریمه</p>
+                    <p className={s.highestFineTitle}>{record.title}</p>
                   </div>
                 </div>
 
+                {/* جزئیات */}
                 <div className={s.detailsGrid}>
                   <div className={s.detailItem}>
                     دانشکده: {record.department ?? "عمومی"}
                   </div>
-                  <div className={s.detailItem}>کد کتاب: {record.bookCode}</div>
+                  <div className={s.detailItem}>
+                    کد کتاب: {record.bookCode}
+                  </div>
                   <div className={s.detailItem}>
                     بیشترین جریمه کتاب: {Number(record.liveFine).toLocaleString("fa-IR")} تومان
                   </div>
                 </div>
+
               </div>
             ))
           ) : (
@@ -156,14 +156,18 @@ const AdminDashboardPage = () => {
           )}
         </div>
 
-        {attentionRecords.length ? (
+        {/* دکمه مشاهده بیشتر */}
+        {attentionRecords.length > 0 && (
           <div className={s.viewMoreContainer}>
-            <Link to='/admin/users?status=Overdue&sort=high-to-low' className={s.viewMoreLink}>
+            <a
+              href="/admin/users?status=Overdue&sort=high-to-low"
+              className={s.viewMoreLink}
+            >
               مشاهده بیشتر
               <ArrowLeft size={16} />
-            </Link>
+            </a>
           </div>
-        ) : null}
+        )}
       </section>
     </div>
   )
