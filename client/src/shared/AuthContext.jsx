@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react"; // ➕ اضافه کنید
+import { createContext, useState, useEffect, useContext } from "react";
 
 const AuthContext = createContext(null);
 
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password, role }),
             });
 
             const data = await response.json();
@@ -242,12 +242,118 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // ➕ توابع گمشده (stub ها)
-    const signup = async (data) => ({ ok: true });
-    const verifyOtpCode = async (code) => ({ ok: true });
-    const completeProfile = async (data) => ({ ok: true });
-    const accountExists = (email) => false;
-    const updateProfile = async (data) => ({ ok: true });
+    // ✅ تایید OTP - درخواست واقعی به Backend
+    const verifyOtpCode = async ({ email, otp }) => {
+        try {
+            console.log("AuthContext: Verifying OTP...");
+            const response = await fetch(`${API_BASE_URL}/verify-otp`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, otp }),
+            });
+
+            const data = await response.json();
+            console.log("AuthContext: OTP verification response:", data);
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    error: data.message || "کد تایید نامعتبر است",
+                };
+            }
+
+            return { ok: true, message: data.message };
+        } catch (error) {
+            console.error("AuthContext: OTP verification error:", error);
+            return {
+                ok: false,
+                error: "خطا در تایید کد",
+            };
+        }
+    };
+
+    // ✅ تکمیل پروفایل - درخواست واقعی به Backend
+    const completeProfile = async ({ email, department, stream, semester, academicYear, rollNumber }) => {
+        try {
+            console.log("AuthContext: Completing profile...");
+            const response = await fetch(`${API_BASE_URL}/complete-profile`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                    email, 
+                    department, 
+                    stream, 
+                    semester, 
+                    year: academicYear, 
+                    rollNo: rollNumber 
+                }),
+            });
+
+            const data = await response.json();
+            console.log("AuthContext: Complete profile response:", data);
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    error: data.message || "پروفایل تکمیل نشد",
+                };
+            }
+
+            return { ok: true, message: data.message };
+        } catch (error) {
+            console.error("AuthContext: Complete profile error:", error);
+            return {
+                ok: false,
+                error: "خطا در تکمیل پروفایل",
+            };
+        }
+    };
+
+    // ✅ سایر توابع
+    const signup = async (data) => {
+        console.log("AuthContext: Signup called (stub)");
+        return { ok: true };
+    };
+
+    const accountExists = (email) => {
+        console.log("AuthContext: Checking if account exists:", email);
+        return false;
+    };
+
+    const updateProfile = async (data) => {
+        try {
+            console.log("AuthContext: Updating profile...");
+            const response = await fetch(`${API_BASE_URL}/update-profile`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                return {
+                    ok: false,
+                    error: result.message || "پروفایل به‌روزرسانی نشد",
+                };
+            }
+
+            return { ok: true, message: result.message };
+        } catch (error) {
+            console.error("AuthContext: Update profile error:", error);
+            return {
+                ok: false,
+                error: "خطا در به‌روزرسانی پروفایل",
+            };
+        }
+    };
 
     return (
         <AuthContext.Provider
