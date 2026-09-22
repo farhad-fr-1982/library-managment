@@ -324,36 +324,57 @@ export const AuthProvider = ({ children }) => {
         return false;
     };
 
-    const updateProfile = async (data) => {
-        try {
-            console.log("AuthContext: Updating profile...");
-            const response = await fetch(`${API_BASE_URL}/update-profile`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
-                },
-                body: JSON.stringify(data),
-            });
+ const updateProfile = async (data) => {
+    try {
+        console.log("AuthContext: Updating profile...");
+        const response = await fetch(`${API_BASE_URL}/update-profile`, {
+            method: "PUT",   // ✅ PUT به جای POST
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+            },
+            body: JSON.stringify(data),
+        });
 
-            const result = await response.json();
+        const result = await response.json();
 
-            if (!response.ok) {
-                return {
-                    ok: false,
-                    error: result.message || "پروفایل به‌روزرسانی نشد",
-                };
-            }
-
-            return { ok: true, message: result.message };
-        } catch (error) {
-            console.error("AuthContext: Update profile error:", error);
+        if (!response.ok) {
             return {
                 ok: false,
-                error: "خطا در به‌روزرسانی پروفایل",
+                error: result.message || "پروفایل به‌روزرسانی نشد",
             };
         }
-    };
+
+        // ✅ اگر بک‌اند user برگرداند، از آن استفاده کن
+        if (result.user) {
+            const mappedUser = mapUserToFrontend(result.user);
+            setCurrentUser(mappedUser);
+            localStorage.setItem(SESSION_KEY, JSON.stringify(mappedUser));
+            return {
+                ok: true,
+                user: mappedUser,
+                message: result.message || "پروفایل با موفقیت به‌روزرسانی شد",
+            };
+        }
+
+        // ✅ اگر user برنگرداند، از currentUser + data استفاده کن
+        const updatedUser = { ...currentUser, ...data };
+        setCurrentUser(updatedUser);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+        return {
+            ok: true,
+            user: updatedUser,
+            message: result.message || "پروفایل با موفقیت به‌روزرسانی شد",
+        };
+
+    } catch (error) {
+        console.error("AuthContext: Update profile error:", error);
+        return {
+            ok: false,
+            error: "خطا در به‌روزرسانی پروفایل",
+        };
+    }
+};
 
     return (
         <AuthContext.Provider
