@@ -991,7 +991,7 @@ export const LibraryProvider = ({ children }) => {
           history: records,
         };
       })()
-    : null;
+    : null
 
   const currentUserHistory = currentUserSummary?.history ?? [];
   const totalClearedFine = studentSummaries.reduce(
